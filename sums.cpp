@@ -5,10 +5,27 @@
 #include <unordered_map>
 
 using namespace std;
+struct hash_X{
+  size_t operator()(const std::complex<int> &x) const{
+	size_t hashcode = 23;
+	hashcode = (hashcode * 37) + x.real();
+	hashcode = (hashcode * 37) + x.imag();
+  return hashcode;
+  };
+};
+
+
 
 int main() {
 
-    std::complex<int> gp1 (7,3);
+    std::complex<int> gp1 (-7,3);
+    std::complex<int> gp2 (-7,3);
+    
+    if(gp1==gp2) {
+    	cout << "Primes match" << endl;
+    } else {
+    	cout << "No match" << endl;
+    }
 
     std::cout << "Real part " << std::real(gp1) << std::endl;
     std::cout << "Imag part " << std::imag(gp1) << std::endl;
@@ -27,7 +44,9 @@ int main() {
     };
 
     std::vector<std::complex<int>>::iterator a,b,c,d;
+    
+    std::unordered_multimap<std::complex<int>,std::vector<std::complex<int>>, hash_X > umm_sums;
+    
+    
 
 }
-
-    
