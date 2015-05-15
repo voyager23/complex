@@ -43,10 +43,24 @@ int main() {
     (6,5),(10,7),(13,12),(16,9),(19,6),(20,19)
     };
 
-    std::vector<std::complex<int>>::iterator a,b,c,d;
-    
+    std::vector<std::complex<int>>::iterator a,b,c,d;    
     std::unordered_multimap<std::complex<int>,std::vector<std::complex<int>>, hash_X > umm_sums;
-    
-    
+
+    for(a=gprimes.begin(); a != gprimes.end(); ++a) {
+    	for(b=gprimes.begin(); b != gprimes.end(); ++b) {
+    		if(b==a) continue;
+    		for(c=gprimes.begin(); c != gprimes.end(); ++c) {
+    			if((c==a)||(c==b)) continue;
+    			for(d=gprimes.begin(); d != gprimes.end(); ++d) {
+    				if((d==a)||(d==b)||(d==c)) continue;
+    				std::complex<int> foo (*a+*b+*c+*d);
+    				std::vector<std::complex<int>> bar { *a, *b, *c, *d };
+    				std::pair<std::complex<int>, std::vector<std::complex<int>>> foobar;
+    				foobar = std::make_pair(foo,bar);
+    				umm_sums.insert(foobar);
+    			}
+    		}
+    	}
+    }
 
 }
