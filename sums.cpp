@@ -83,6 +83,7 @@ int vect_gaussprimes(std::vector< std::complex<int> > *gpv, int n) {
 using gPrime = std::complex<int>;
 using cNode = std::vector<gPrime>;
 using KeyValue = std::pair<gPrime,cNode>;
+using NodeList = std::vector<cNode>;
 
 
 int main() {
@@ -90,6 +91,8 @@ int main() {
 	const int Limit = 10;
 	
 	cNode gaussian;
+	
+	cNode::iterator rai;	//random access iterator
 	
 	vect_gaussprimes(&gaussian, Limit);    
     
@@ -119,7 +122,6 @@ int main() {
 		// the sum 26 + i12 decomposes to 29 groups of 24. 1176 elements
 		if(umm_sums.bucket_size(i) >= (24*49)) {
 			++count;
-			std::cout << "bucket #" << i << " has " << umm_sums.bucket_size(i) << " elements.\n";
 			for(auto b = umm_sums.cbegin(i); b != umm_sums.cend(i); ++b) {
 				gPrime gp = b->first;
 				cNode cn = b->second;
@@ -128,7 +130,8 @@ int main() {
 					cout << c->real() << "+i" << c->imag() << "\t";
 				}
 				cout << std::endl;	
-			}
+			}			
+			std::cout << "bucket #" << i << " has " << umm_sums.bucket_size(i) << " elements.\n";
 			break;
 		}
 	}
