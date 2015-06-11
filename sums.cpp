@@ -211,11 +211,13 @@ int main() {
 	nl.resize( std::distance(nl.begin(),it) );
 	// print final vector
 	cout << "==================" << std::endl;
+	count = 0;
 	for(auto a = nl.begin(); a != nl.end(); ++a) {
 		for(auto b = (*a).begin(); b != (*a).end(); ++b) {
 			cout << *b;
 		}
 		cout << std::endl;
+		++count;
 	}
-	cout << "Final vector size: " << sizeof(gPrime) << std::endl;
+	cout << "Final vector size: " << count << std::endl;
 }

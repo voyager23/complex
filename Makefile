@@ -1,8 +1,5 @@
 # Makefile for complex
 
-dev1:	dev1.cpp
-	g++ -std=gnu++11 -g -Wall dev1.cpp -o dev1
-
 # --------------------------------------------
 
 cpg:	cpg.cpp
