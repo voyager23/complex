@@ -33,6 +33,10 @@
 
 using namespace std;
 
+using NodeList = std::vector<cNode>;
+int write_nl(NodeList &nl);
+int read_nl(NodeList &nl);
+std::string path = "./nodelist.dat";
 
 //======================================================================
 class gPrime {
@@ -112,11 +116,6 @@ void cNode::prt_cnode() {
 }
 
 //=====================Read/Write Functions=============================
-using NodeList = std::vector<cNode>;
-
-int write_nl(NodeList &nl);
-int read_nl(NodeList &nl);
-std::string path = "./nodelist.dat";
 
 int write_nl(NodeList &nl) {
 
