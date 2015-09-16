@@ -16,3 +16,30 @@
 				}
 				cout << std::endl;
 				cout << std::endl;
+				
+				std::array<gPrime,12> sig_array = {(*a)[0],(*a)[1],(*a)[2],(*a)[3],\
+				(*b)[1],(*b)[2],(*b)[3],\
+				(*c)[1],(*c)[2],(*c)[3],\
+				(*d)[2],(*d)[3]};
+
+				std::vector<double> hash_base;
+					for( auto x=0; x<4; ++x) {
+						hash_base.push_back((*a)[x].real());
+						hash_base.push_back((*a)[x].imag());
+					}
+					for( auto x=1; x<4; ++x) {
+						hash_base.push_back((*b)[x].real());
+						hash_base.push_back((*b)[x].imag());
+						hash_base.push_back((*c)[x].real());
+						hash_base.push_back((*c)[x].imag());
+					}
+					for( auto x=2; x<4; ++x) {
+						hash_base.push_back((*d)[x].real());
+						hash_base.push_back((*d)[x].imag());
+					}	
+					std::sort(hash_base.begin(),hash_base.end());
+					
+					size_t hash = fasthash64((const void*)&hash_base, (12*sizeof(double)), 0x12345678);
+					
+					for(auto x = hash_base.begin(); x != hash_base.end(); ++x) cout << *x << "\t";
+					cout << std::endl;

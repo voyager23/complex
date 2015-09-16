@@ -29,6 +29,8 @@
 #include <unordered_map>
 #include <algorithm>
 
+#include "./fasthash.h"
+
 using namespace std;
 
 using gPrime = std::complex<double>;
@@ -206,11 +208,16 @@ int read_nl(NodeList &nl) {
 
 int main() {
 
-	const int Limit = 13;
+	const int Limit = 10;
 	gPrime Target;
 	cNode gaussian;			// Storage for Gausian primes
 	cNode::iterator rai;	//random access iterator
     std::unordered_multimap<gPrime,cNode, hash_X > umm_sums;
+    
+    cout << "Integer:" << sizeof(int) << std::endl;
+    cout << "Double:"  << sizeof(double) << std::endl;
+    cout << "Long:"    << sizeof(long) << std::endl;
+    cout << "Size_t:"    << sizeof(size_t) << std::endl;
 
 	// generate Gaussian primes up to Limit
 	vect_gaussprimes(&gaussian, Limit);	
@@ -358,6 +365,20 @@ int main() {
 					
 					++count; // Solution count
 					
+					std::array<gPrime,12> sig_array = {(*a)[0],(*a)[1],(*a)[2],(*a)[3],\
+					(*b)[1],(*b)[2],(*b)[3],\
+					(*c)[1],(*c)[2],(*c)[3],\
+					(*d)[2],(*d)[3]};
+					
+					std::sort(&sig_array[0], &sig_array[12], gprime_lt);
+					
+					size_t hash = 0x12345678;
+					for(auto x=0; x<12; ++x) {
+						std::array<double,2> values = { sig_array[x].real(), sig_array[x].imag() };
+						hash = fasthash64((const void*)&values, sizeof(double)*2, hash);
+					}
+					
+					cout << "Target:" << Target << "\tHash:" << hash << std::endl;
 					// print 4 vectors and blank line
 					for(auto z = (*a).begin(); z != (*a).end(); ++z) {
 						cout << *z << "\t";
@@ -374,10 +395,7 @@ int main() {
 					for(auto z = (*d).begin(); z != (*d).end(); ++z) {
 						cout << *z << "\t";
 					}
-					cout << std::endl;
-					cout << "\t" << Target << std::endl;
-					
-					//exit(0);
+					cout << std::endl << std::endl;
 					
 				} // end d
 			} // end c			
