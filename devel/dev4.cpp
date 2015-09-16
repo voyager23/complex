@@ -37,14 +37,12 @@ using NodeList = std::vector<cNode>;
 using KeyValue = std::pair<gPrime,cNode>;
 //----------------------------------------------------------------------
 struct hash_X{
-  size_t operator()(const complex<int> &x) const{
-	size_t hashcode = 23;
-	hashcode = (hashcode * 37) + x.real();
-	hashcode = (hashcode * 37) + x.imag();
-	//hash<int> f;
-	//hashcode = f( x.real() ) ^ f( x.imag() );
+  size_t operator()(const complex<double> &x) const{
+	size_t hashcode = 23.0;
+	hashcode = (hashcode * 37.0) + x.real();
+	hashcode = (hashcode * 37.0) + x.imag();
   return hashcode;
-  };
+  }
 };
 //----------------------------------------------------------------------
 void sieve(std::vector<int> *p, int n) {
@@ -154,7 +152,6 @@ int write_nl(NodeList &nl) {
 	char * memblock = (char*)&wspace[0];
 
 	if (fout.is_open()) {
-
 		// serialise each cNode into an array of 4*8 bytes;
 		for(auto a = nl.begin(); a != nl.end(); ++a) {
 			auto it = wspace.begin();
@@ -168,10 +165,8 @@ int write_nl(NodeList &nl) {
 			*it++ = (*a)[3].imag();
 			fout.write(memblock, sizeof(double)*8);
 		}
-
 		fout.close();
 	}
-
 	return 0;
 }
 
@@ -211,16 +206,15 @@ int read_nl(NodeList &nl) {
 
 int main() {
 
-	const int Limit = 10;
-
-	cNode gaussian;
-
+	const int Limit = 13;
+	gPrime Target;
+	cNode gaussian;			// Storage for Gausian primes
 	cNode::iterator rai;	//random access iterator
-
-	vect_gaussprimes(&gaussian, Limit);
-
     std::unordered_multimap<gPrime,cNode, hash_X > umm_sums;
 
+	// generate Gaussian primes up to Limit
+	vect_gaussprimes(&gaussian, Limit);	
+	// generate complex nodes and store in unordered multimap
     for(auto a=gaussian.begin(); a != gaussian.end(); ++a) {
     	for(auto b=gaussian.begin(); b != gaussian.end(); ++b) {
     		if(b==a) continue;
@@ -236,57 +230,32 @@ int main() {
     		}
     	}
     }
-
-    NodeList nl;
+ 
 	unsigned nbuckets = umm_sums.bucket_count();
 	unsigned count = 0;
+	unsigned idx;
+	
+	//Determine the size and index of biggest bucket
 	for(unsigned i=0; i<nbuckets; ++i) {
-		// the sum 26 + i12 decomposes to 29 groups of 24. 1176 elements
-		// bucket #32461
-		//if(umm_sums.bucket_size(i) >= (24*49)) {
-		if(i==32461) {
-			++count;
-			for(auto b = umm_sums.cbegin(i); b != umm_sums.cend(i); ++b) {
-				// gPrime gp = b->first;
-				cNode cn = b->second;
-				// cout << gp.real() << "+" << gp.imag() << "\t";
-				// sort the node elements (ascending)
-				std::sort(cn.begin(), cn.end(), gprime_lt );
-				// print the contents of the cNode (4 values)
-#if(0)          // Debug output
-				for(auto c = cn.begin(); c != cn.end(); ++c) {
-					cout << c->real() << "+i" << c->imag() << "\t";
-				}
-				cout << std::endl;
-#endif
-				// add the cNode to a vector of cNodes (NodeList)
-				nl.push_back(cn);
-			}
-			//std::cout << "bucket #" << i << " has " << umm_sums.bucket_size(i) << " elements.\n";
-			break;	// for(unsigned....
+		if(umm_sums.bucket_size(i) >= count) {
+			idx = i;
+			count = umm_sums.bucket_size(i);
 		}
 	}
-	// break jumps here
-	// sort the cNodes in ascending order
-	std::sort(nl.begin(), nl.end(), cnode_lt);
-
-#if(0)  // Debug output
-	for(auto a = nl.begin(); a != nl.end(); ++a) {
-		for(auto b = (*a).begin(); b != (*a).end(); ++b) {
-			cout << *b;
-		}
-		cout << std::endl;
+	
+	cout << "Bucket count:" << umm_sums.bucket_count() << " Bucket " << idx << " contains " << count << " entries.\n";
+	auto b = umm_sums.cbegin(idx);
+	Target = b->first;
+	cout << "Associated sum:" << Target << std::endl;
+	
+	// populate the Nodelist with the selected entry from umm_sums.
+	NodeList nl;
+	while( b != umm_sums.cend(idx) ) {
+		nl.push_back(b->second);
+		++b;
 	}
 
-	cout << count << " active buckets." << std::endl;
-#endif
-
-	// delete duplicate entries
-	NodeList::iterator it;
-	it = std::unique(nl.begin(), nl.end(), cnode_eq);
-	nl.resize( std::distance(nl.begin(),it) );
-
-	// print final vector
+	// print final Nodelist
 	cout << "==================" << std::endl;
 	count = 0;
 	for(auto a = nl.begin(); a != nl.end(); ++a) {
@@ -296,33 +265,123 @@ int main() {
 		cout << std::endl;
 		++count;
 	}
-	cout << "Output vector size: " << count << std::endl;
-
-    gPrime p0 (2.0,1.0);
-    gPrime p1 (4.0,1.0);
-    gPrime p2 (10.0,1.0);
-    gPrime p3 (10.0,9.0);
-    gPrime p4 (4.0,1.0);
-    gPrime p5 (5.0,2.0);
-    gPrime p6 (7.0,0.0);
-    gPrime p7 (10.0,9.0);
-
-    std::vector< gPrime > n0;   // vector of gPrimes to test for unique values
-    std::vector< gPrime > result;
-
-    n0.push_back(p0);
-    n0.push_back(p1);
-    n0.push_back(p2);
-    n0.push_back(p3);
-    n0.push_back(p4);
-    n0.push_back(p5);
-    n0.push_back(p6);			// 7 values pushed to vector
-    
-    std::vector<gPrime>::iterator source = n0.begin();
-    
-    result.clear();
-    
-
- 
-
-}
+	cout << "Nodelist size: " << count << std::endl;
+	
+	// DEBUG EXIT
+	// exit(0);
+	//===========
+	
+	// -----------------------------------------------------------------
+	count = 0;
+	bool fail_flag;
+	for(auto a = nl.begin(); a != nl.end(); ++a) {		
+		for( auto b = nl.begin(); b != nl.end(); ++b) {
+			if(b==a) continue;
+			// test diagonal match here
+			if((*a)[1] != (*b)[0]) continue;
+			// test for unique values
+			fail_flag = 0;
+			for(int y=1; y!=4; ++y) {	// index to 'b' vector
+				for(int x=0; x!=4; ++x) {	// index to 'a' vector
+					fail_flag = ((*a)[x] == (*b)[y]);
+					if(fail_flag) break;
+				}
+				if(fail_flag) break;	// break out of xy loop on fail
+			}
+			if(fail_flag) continue;		// get next b value
+			
+			for(auto c = nl.begin(); c != nl.end(); ++c) {
+				if((c==a)||(c==b)) continue;
+				// test diagonal match here
+				if((*b)[1] != (*c)[0]) continue;
+				
+				// test for unique values between c and a
+				fail_flag = 0;
+				for(int y=1; y!=4; ++y) {	// index to 'c' vector
+					for(int x=0; x!=4; ++x) {	// index to 'a' vector
+						fail_flag = ((*a)[x] == (*c)[y]);
+						if(fail_flag) break;
+					}
+					if(fail_flag) break;	// break out of xy loop on fail
+				}
+				if(fail_flag) continue;		// get next c value
+				
+				// test for unique values between c and b
+				for(int y=1; y!=4; ++y) {	// index to 'c' vector
+					for(int x=1; x!=4; ++x) {	// index to 'b' vector
+						fail_flag = ((*b)[x] == (*c)[y]);
+						if(fail_flag) break;
+					}
+					if(fail_flag) break;	// break out of xy loop on fail
+				}
+				if(fail_flag) continue;		// get next c value
+				
+				for(auto d = nl.begin(); d != nl.end(); ++d) {
+					if((d==c)||(d==b)||(d==a)) continue;
+					// test 2 diagonal matches here
+					if((*c)[1] != (*d)[0]) continue;
+					if((*d)[1] != (*a)[0]) continue;
+					// test for unique values between d and a
+					fail_flag = 0;
+					for(int y=2; y!=4; ++y) {	// index to 'd' vector
+						for(int x=0; x!=4; ++x) {	// index to 'a' vector
+							fail_flag = ((*a)[x] == (*d)[y]);
+							if(fail_flag) break;
+						}
+						if(fail_flag) break;	// break out of xy loop on fail
+					}
+					if(fail_flag) continue;		// get next d value
+					
+					// test for unique values between d and b
+					for(int y=2; y!=4; ++y) {	// index to 'd' vector
+						for(int x=1; x!=4; ++x) {	// index to 'b' vector
+							fail_flag = ((*b)[x] == (*d)[y]);
+							if(fail_flag) break;
+						}
+						if(fail_flag) break;	// break out of xy loop on fail
+					}
+					if(fail_flag) continue;		// get next d value
+					
+					// test for unique values between d and c
+					for(int y=2; y!=4; ++y) {	// index to 'd' vector
+						for(int x=1; x!=4; ++x) {	// index to 'c' vector
+							fail_flag = ((*c)[x] == (*d)[y]);
+							if(fail_flag) break;
+						}
+						if(fail_flag) break;	// break out of xy loop on fail
+					}
+					if(fail_flag) continue;		// get next d value
+					
+					// Column sum check to target value
+					if(( (*a)[2]+(*b)[2]+(*c)[2]+(*d)[2] ) != Target ) continue;
+					if(( (*a)[3]+(*b)[3]+(*c)[3]+(*d)[3] ) != Target ) continue;
+					
+					++count; // Solution count
+					
+					// print 4 vectors and blank line
+					for(auto z = (*a).begin(); z != (*a).end(); ++z) {
+						cout << *z << "\t";
+					}
+					cout << std::endl;
+					for(auto z = (*b).begin(); z != (*b).end(); ++z) {
+						cout << *z << "\t";
+					}
+					cout << std::endl;
+					for(auto z = (*c).begin(); z != (*c).end(); ++z) {
+						cout << *z << "\t";
+					}
+					cout << std::endl;
+					for(auto z = (*d).begin(); z != (*d).end(); ++z) {
+						cout << *z << "\t";
+					}
+					cout << std::endl;
+					cout << "\t" << Target << std::endl;
+					
+					//exit(0);
+					
+				} // end d
+			} // end c			
+		} // end b
+	} // end a
+	cout << "Found " << count << " solutions.\n";
+} //end

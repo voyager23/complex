@@ -1,0 +1,18 @@
+				// print 4 vectors and blank line
+				for(auto z = (*a).begin(); z != (*a).end(); ++z) {
+					cout << *z;
+				}
+				cout << std::endl;
+				for(auto z = (*b).begin(); z != (*b).end(); ++z) {
+					cout << *z;
+				}
+				cout << std::endl;
+				for(auto z = (*c).begin(); z != (*c).end(); ++z) {
+					cout << *z;
+				}
+				cout << std::endl;
+				for(auto z = (*d).begin(); z != (*d).end(); ++z) {
+					cout << *z;
+				}
+				cout << std::endl;
+				cout << std::endl;
