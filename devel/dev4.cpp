@@ -370,15 +370,15 @@ int main() {
 					(*c)[1],(*c)[2],(*c)[3],\
 					(*d)[2],(*d)[3]};
 					
-					std::sort(&sig_array[0], &sig_array[12], gprime_lt);
+					std::sort(&sig_array[0], &sig_array[12], gprime_lt);	// key value
 					
 					size_t hash = 0x12345678;
 					for(auto x=0; x<12; ++x) {
 						std::array<double,2> values = { sig_array[x].real(), sig_array[x].imag() };
 						hash = fasthash64((const void*)&values, sizeof(double)*2, hash);
-					}
-					
+					}					
 					cout << "Target:" << Target << "\tHash:" << hash << std::endl;
+					
 					// print 4 vectors and blank line
 					for(auto z = (*a).begin(); z != (*a).end(); ++z) {
 						cout << *z << "\t";
