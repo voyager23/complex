@@ -363,20 +363,25 @@ int main() {
 					if(( (*a)[2]+(*b)[2]+(*c)[2]+(*d)[2] ) != Target ) continue;
 					if(( (*a)[3]+(*b)[3]+(*c)[3]+(*d)[3] ) != Target ) continue;
 					
-					++count; // Solution count
+					++count; // Found a Solution - inc count
 					
-					std::array<gPrime,12> sig_array = {(*a)[0],(*a)[1],(*a)[2],(*a)[3],\
+					std::vector<gPrime> sig_vector = {(*a)[0],(*a)[1],(*a)[2],(*a)[3],\
 					(*b)[1],(*b)[2],(*b)[3],\
 					(*c)[1],(*c)[2],(*c)[3],\
-					(*d)[2],(*d)[3]};
-					
-					std::sort(&sig_array[0], &sig_array[12], gprime_lt);	// key value
-					
+					(*d)[2],(*d)[3]};					
+					std::sort(sig_vector.begin(), sig_vector.end(), gprime_lt);	// key value for multi_map
+										
 					size_t hash = 0x12345678;
-					for(auto x=0; x<12; ++x) {
-						std::array<double,2> values = { sig_array[x].real(), sig_array[x].imag() };
-						hash = fasthash64((const void*)&values, sizeof(double)*2, hash);
-					}					
+					for(auto x=sig_vector.begin(); x!=sig_vector.end(); ++x) {
+						std::array<double,2> values = { (*x).real(), (*x).imag() };
+						hash = fasthash32((const void*)&values, sizeof(double)*2, hash);
+					}
+					
+					std::vector<gPrime> tocta_vector = {
+					(*a)[0],(*a)[1],(*a)[2],(*a)[3],\
+					(*b)[0],(*b)[1],(*b)[2],(*b)[3],\
+					(*c)[0],(*c)[1],(*c)[2],(*c)[3],\
+					(*d)[0],(*a)[0],(*d)[2],(*d)[3]};	// value for multimap				
 					cout << "Target:" << Target << "\tHash:" << hash << std::endl;
 					
 					// print 4 vectors and blank line
