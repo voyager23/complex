@@ -374,7 +374,7 @@ int main() {
 					size_t hash = 0x12345678;
 					for(auto x=sig_vector.begin(); x!=sig_vector.end(); ++x) {
 						std::array<double,2> values = { (*x).real(), (*x).imag() };
-						hash = fasthash32((const void*)&values, sizeof(double)*2, hash);
+						hash = fasthash64((const void*)&values, sizeof(double)*2, hash);
 					}
 					
 					std::vector<gPrime> tocta_vector = {
