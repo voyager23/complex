@@ -147,7 +147,7 @@ int main() {
 
 	const int Limit = 20;
 
-	cNode gaussian;
+	cNode gaussian;			// cNode is defined as a vector
 
 	cNode::iterator rai;	//random access iterator
 
