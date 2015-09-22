@@ -139,11 +139,11 @@ int main(int argc, char **argv)
 	
 	cNode gaussian;		// cNode is defined as a vector of gPrimes
 	(int(abs(real)))>=(int(abs(imag))) ? Limit=(int(abs(real))) : Limit=(int(abs(imag)));
-	
+
 	vect_gaussprimes(&gaussian, Limit); // generate a vector of Gaussian primes
 
-    std::unordered_multimap<gPrime,cNode, hash_X > umm_sums;
-
+	std::vector<cNode> sums;	// vector of cNodes which sum to target value
+	
     for(auto a=gaussian.begin(); a != gaussian.end(); ++a) {
     	for(auto b=gaussian.begin(); b != gaussian.end(); ++b) {
     		if(b==a) continue;
@@ -153,9 +153,8 @@ int main(int argc, char **argv)
     				if((d==a)||(d==b)||(d==c)) continue;
     				gPrime foo {(*a+*b+*c+*d)};
     				if(Target==foo) {
-						cNode bar { *a, *b, *c, *d };
-						KeyValue foobar = std::make_pair(foo,bar);
-						umm_sums.insert(foobar);
+
+						sums.push_back({ *a, *b, *c, *d });
 					}
     			}
     		}
@@ -163,34 +162,27 @@ int main(int argc, char **argv)
     }
     
     std::vector<gPrime> gprimes;
-    gPrime gp;
     cNode cn;
-	unsigned nbuckets = umm_sums.bucket_count();
-	for(unsigned i=0; i<nbuckets; ++i) {
-		if(umm_sums.bucket_size(i) > 0) {
-			gprimes.clear();
-			for(auto b = umm_sums.cbegin(i); b != umm_sums.cend(i); ++b) {
-				gp = b->first;	// associated sum
-				cn = b->second;	// vector of 4 gPrimes.
-				// copy the 4 gPrimes into a vector for sorting
-				for(auto c = cn.begin(); c != cn.end(); ++c) gprimes.push_back(*c);
-			}
-			// sort the node elements (ascending)
-			std::sort(gprimes.begin(), gprimes.end(), gprime_lt );
-			// delete duplicate entries
-			std::vector<gPrime>::iterator it;
-			it = std::unique(gprimes.begin(), gprimes.end());
-			gprimes.resize( std::distance(gprimes.begin(),it) );
-			// Report final size and associated sum
-			cout << "Target sum:" << gp << " number of unique gprimes:" << gprimes.size() << std::endl;
-			if(gprimes.size() < 12)	{
-				cout << "Not enough gPrimes!";
-			} else {
-				cout << "Sufficient to contine.";
-			}
-			cout << std::endl;
-		}
+	
+	for(auto b = sums.begin(); b != sums.cend(); ++b) {
+		cn = *b;	// vector of 4 gPrimes.
+		// copy the 4 gPrimes into a vector for sorting
+		for(auto c = cn.begin(); c != cn.end(); ++c) gprimes.push_back(*c);
 	}
+	// sort the node elements (ascending)
+	std::sort(gprimes.begin(), gprimes.end(), gprime_lt );
+	// delete duplicate entries
+	std::vector<gPrime>::iterator it;
+	it = std::unique(gprimes.begin(), gprimes.end());
+	gprimes.resize( std::distance(gprimes.begin(),it) );
+	// Report final size and associated sum
+	cout << "Target sum:" << Target << " number of unique gprimes:" << gprimes.size() << std::endl;
+	if(gprimes.size() < 12)	{
+		cout << "Not enough gPrimes!";
+	} else {
+		cout << "Sufficient to contine.";
+	}
+	cout << std::endl;
 	return 0;
 }
 
