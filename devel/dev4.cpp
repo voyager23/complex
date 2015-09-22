@@ -220,7 +220,8 @@ int main() {
     cout << "Size_t:"    << sizeof(size_t) << std::endl;
 
 	// generate Gaussian primes up to Limit
-	vect_gaussprimes(&gaussian, Limit);	
+	vect_gaussprimes(&gaussian, Limit);
+	
 	// generate complex nodes and store in unordered multimap
     for(auto a=gaussian.begin(); a != gaussian.end(); ++a) {
     	for(auto b=gaussian.begin(); b != gaussian.end(); ++b) {
@@ -254,7 +255,7 @@ int main() {
 	auto b = umm_sums.cbegin(idx);
 	Target = b->first;
 	cout << "Associated sum:" << Target << std::endl;
-	
+	exit(0);	//DEBUG
 	// populate the Nodelist with the selected entry from umm_sums.
 	NodeList nl;
 	while( b != umm_sums.cend(idx) ) {
@@ -374,7 +375,7 @@ int main() {
 					size_t hash = 0x12345678;
 					for(auto x=sig_vector.begin(); x!=sig_vector.end(); ++x) {
 						std::array<double,2> values = { (*x).real(), (*x).imag() };
-						hash = fasthash64((const void*)&values, sizeof(double)*2, hash);
+						hash = fasthash32((const void*)&values, sizeof(double)*2, hash);
 					}
 					
 					std::vector<gPrime> tocta_vector = {

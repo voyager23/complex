@@ -1,5 +1,5 @@
 /*
- * sums.cpp
+ * sums2.cpp
  *
  * Copyright 2015 Mike <mike@fc21>
  *
@@ -139,77 +139,13 @@ bool cnode_eq(cNode i, cNode j) {
 	return (i==j);
 	}
 
-//----------Read/Write Functions-----------
 
-int write_nl(NodeList &nl);
-int read_nl(NodeList &nl);
-
-int write_nl(NodeList &nl) {
-
-	std::string path = "./nodelist.dat";
-	ofstream fout (path, ios::out|ios::binary);
-	std::array<int,8> wspace;
-	char * memblock = (char*)&wspace[0];
-
-	if (fout.is_open()) {
-
-		// serialise each cNode into an array of 4*8 bytes;
-		for(auto a = nl.begin(); a != nl.end(); ++a) {
-			auto it = wspace.begin();
-			*it++ = (*a)[0].real();
-			*it++ = (*a)[0].imag();
-			*it++ = (*a)[1].real();
-			*it++ = (*a)[1].imag();
-			*it++ = (*a)[2].real();
-			*it++ = (*a)[2].imag();
-			*it++ = (*a)[3].real();
-			*it++ = (*a)[3].imag();
-			fout.write(memblock, sizeof(int)*8);
-		}
-
-		fout.close();
-	}
-
-	return 0;
-}
-
-int read_nl(NodeList &nl) {
-
-	std::string path = "./nodelist.dat";
-	streampos size;
-	ifstream fin (path, ios::in|ios::binary|ios::ate);
-	std::array<int,8> int_buffer;	// input buffer for 8 ints
-	char * memblock;	// imput buffer location
-	cNode cnode;		// workspace to create a node of 4 complex int
-
-	if(fin.is_open()) {
-		memblock = (char*)&int_buffer[0];
-		size = fin.tellg();
-		fin.seekg(0, ios::beg);
-		while(size>0) {
-			fin.read(memblock, sizeof(int)*8);
-			std::complex<int> *it = (std::complex<int>*)&int_buffer[0];
-			cnode.clear();
-			for(auto x=0;x!=4;++x) {
-				cnode.push_back(*it);
-				cout << *it++;
-			}
-			cout << std::endl;
-			nl.push_back(cnode);
-			size -= sizeof(int)*8;
-		}
-		fin.close();
-	} else {
-		cout << "Error: could not open " << path << std::endl;
-	}
-	return 0;
-}
 
 //======================================================================
 
 int main() {
 
-	const int Limit = 10;
+	const int Limit = 20;
 
 	cNode gaussian;
 
@@ -234,81 +170,32 @@ int main() {
     		}
     	}
     }
-
-    NodeList nl;
+    std::vector<gPrime> gprimes;
+    gPrime gp;
+    cNode cn;
 	unsigned nbuckets = umm_sums.bucket_count();
 	unsigned count = 0;
 	for(unsigned i=0; i<nbuckets; ++i) {
-		// the sum 26 + i12 decomposes to 29 groups of 24. 1176 elements
-		// bucket #32461
-		//if(umm_sums.bucket_size(i) >= (24*49)) {
-		if(i==32461) {
-			++count;
+		if(umm_sums.bucket_size(i) >= 72) {
+			gprimes.clear();
 			for(auto b = umm_sums.cbegin(i); b != umm_sums.cend(i); ++b) {
-				gPrime gp = b->first;
-				cNode cn = b->second;
-				cout << gp.real() << "+" << gp.imag() << "\t";
-				// sort the node elements (ascending)
-				std::sort(cn.begin(), cn.end(), gprime_lt );
-				// print the contents of the cNode (4 values)
-#if(0)
-				for(auto c = cn.begin(); c != cn.end(); ++c) {
-					cout << c->real() << "+i" << c->imag() << "\t";
-				}
-				cout << std::endl;
-#endif
-				// add the cNode to a vector of cNodes (NodeList)
-				nl.push_back(cn);
+				gp = b->first;	// associated sum
+				cn = b->second;	// vector of 4 gPrimes.
+				// copy the 4 gPrimes into a vector for sorting
+				for(auto c = cn.begin(); c != cn.end(); ++c) gprimes.push_back(*c);
 			}
-			//std::cout << "bucket #" << i << " has " << umm_sums.bucket_size(i) << " elements.\n";
-			break;	// for(unsigned....
+			// sort the node elements (ascending)
+			std::sort(gprimes.begin(), gprimes.end(), gprime_lt );
+			// delete duplicate entries
+			std::vector<gPrime>::iterator it;
+			it = std::unique(gprimes.begin(), gprimes.end());
+			gprimes.resize( std::distance(gprimes.begin(),it) );
+			// Report final size and associated sum
+			if(gprimes.size() >=12)	{
+				++count;	
+				cout << "Target sum:" << gp << " number of unique gprimes:" << gprimes.size() << std::endl;
+			}
 		}
 	}
-	// break jumps here
-	// sort the cNodes in ascending order
-	std::sort(nl.begin(), nl.end(), cnode_lt);
-#if(0)
-	for(auto a = nl.begin(); a != nl.end(); ++a) {
-		for(auto b = (*a).begin(); b != (*a).end(); ++b) {
-			cout << *b;
-		}
-		cout << std::endl;
-	}
-
-	cout << count << " active buckets." << std::endl;
-#endif
-	// delete duplicate entries
-	NodeList::iterator it;
-	it = std::unique(nl.begin(), nl.end(), cnode_eq);
-	nl.resize( std::distance(nl.begin(),it) );
-
-	// print final vector
-	cout << "==================" << std::endl;
-	count = 0;
-	for(auto a = nl.begin(); a != nl.end(); ++a) {
-		for(auto b = (*a).begin(); b != (*a).end(); ++b) {
-			cout << *b;
-		}
-		cout << std::endl;
-		++count;
-	}
-	cout << "Output vector size: " << count << std::endl;
-
-	// Save final vector to file
-	write_nl(nl);
-
-	// Clear and read file to vector
-	cout << "Reading from nodelist.dat" << std::endl;
-	nl.clear();
-	read_nl(nl);
-
-	count = 0;
-	for(auto a = nl.begin(); a != nl.end(); ++a) {
-		for(auto b = (*a).begin(); b != (*a).end(); ++b) {
-			cout << *b;
-		}
-		cout << std::endl;
-		++count;
-	}
-	cout << "Node count: " << count << std::endl;
+	cout << "Final count:" << count << std::endl;
 }
