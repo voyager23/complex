@@ -208,7 +208,7 @@ int read_nl(NodeList &nl) {
 
 int main() {
 
-	const int Limit = 10;
+	const int Limit = 8;
 	gPrime Target;
 	cNode gaussian;			// Storage for Gausian primes
 	cNode::iterator rai;	//random access iterator
@@ -255,7 +255,7 @@ int main() {
 	auto b = umm_sums.cbegin(idx);
 	Target = b->first;
 	cout << "Associated sum:" << Target << std::endl;
-	exit(0);	//DEBUG
+	// exit(0);	//DEBUG
 	// populate the Nodelist with the selected entry from umm_sums.
 	NodeList nl;
 	while( b != umm_sums.cend(idx) ) {

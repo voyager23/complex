@@ -194,6 +194,8 @@ int main() {
 			if(gprimes.size() >=12)	{
 				++count;	
 				cout << "Target sum:" << gp << " number of unique gprimes:" << gprimes.size() << std::endl;
+				for(auto p = gprimes.begin(); p != gprimes.end(); ++p) cout << *p << "\t";
+				cout << std::endl;
 			}
 		}
 	}
