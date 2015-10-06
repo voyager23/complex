@@ -131,92 +131,34 @@ bool gprime_lt(gPrime i, gPrime j) {
 	// return true if i < j
 	return ((i.real()<j.real())||((i.real()==j.real())&&(i.imag()<j.imag())));
 }
+//----------------------------------------------------------------------
 
+int write_cnode(NodeList::iterator a, ofstream& fout) {
+	// write a cNode of 4 complex<double> to file
+	// sizeof(double) = 8;
+	std::array<double,8> wspace;
+	if(fout.is_open()) {
+			auto it = wspace.begin();
+			*it++ = (*a)[0].real();	*it++ = (*a)[0].imag();
+			*it++ = (*a)[1].real();	*it++ = (*a)[1].imag();
+			*it++ = (*a)[2].real();	*it++ = (*a)[2].imag();
+			*it++ = (*a)[3].real();	*it++ = (*a)[3].imag();
+			fout.write((char*)&wspace, sizeof(double)*8);
+	}
+	return 0;
+}
+	
 //======================================================================
 
 int main(int argc, char **argv)
 {
 	// Data block of possible target values
-	std::vector<std::complex<double>> fozboz = { 
-		std::complex<double>(23,18),
-		std::complex<double>(24,3),
-		std::complex<double>(24,4),
-		std::complex<double>(24,5),
-		std::complex<double>(24,6),
-		std::complex<double>(24,7),
-		std::complex<double>(24,8),
-		std::complex<double>(24,9),
-		std::complex<double>(24,10),
-		std::complex<double>(24,11),
-		std::complex<double>(24,12),
-		std::complex<double>(24,13),
-		std::complex<double>(24,14),
-		std::complex<double>(24,15),
-		std::complex<double>(24,16),
-		std::complex<double>(24,17),
-		std::complex<double>(24,18),
-		std::complex<double>(24,19),
-		std::complex<double>(25,3),
-		std::complex<double>(25,4),
-		std::complex<double>(25,5),
-		std::complex<double>(25,6),
-		std::complex<double>(25,7),
-		std::complex<double>(25,8),
-		std::complex<double>(25,9),
-		std::complex<double>(25,10),
-		std::complex<double>(25,11),
-		std::complex<double>(25,12),
-		std::complex<double>(25,13),
-		std::complex<double>(25,14),
-		std::complex<double>(25,15),
-		std::complex<double>(25,16),
-		std::complex<double>(25,17),
-		std::complex<double>(25,18),
-		std::complex<double>(25,19),
-		std::complex<double>(25,20),
-		std::complex<double>(26,3),
-		std::complex<double>(26,4),
-		std::complex<double>(26,5),
-		std::complex<double>(26,6),
-		std::complex<double>(26,7),
-		std::complex<double>(26,8),
-		std::complex<double>(26,9),
-		std::complex<double>(26,10),
-		std::complex<double>(26,11),
-		std::complex<double>(26,12),
-		std::complex<double>(26,13),
-		std::complex<double>(26,14),
-		std::complex<double>(26,15),
-		std::complex<double>(26,16),
-		std::complex<double>(26,17),
-		std::complex<double>(26,18),
-		std::complex<double>(26,19),
-		std::complex<double>(26,20),
-		std::complex<double>(26,21),
-		std::complex<double>(27,3),
-		std::complex<double>(27,4),
-		std::complex<double>(27,5),
-		std::complex<double>(27,6),
-		std::complex<double>(27,7),
-		std::complex<double>(27,8),
-		std::complex<double>(27,9),
-		std::complex<double>(27,10),
-		std::complex<double>(27,11),
-		std::complex<double>(27,12),
-		std::complex<double>(27,13),
-		std::complex<double>(27,14),
-		std::complex<double>(27,15),
-		std::complex<double>(27,16),
-		std::complex<double>(27,17),
-		std::complex<double>(27,18),
-		std::complex<double>(27,19),
-		std::complex<double>(27,20),
-		std::complex<double>(27,21),
-		std::complex<double>(27,22)
-	};
+	std::vector<std::complex<double>> fozboz = { std::complex<double>(24,8) };
 	
 	std::complex<double> Target;
 	NodeList nl;
+	
+	cout << "Sizeof(double):" << sizeof(double) << std::endl;
 	
 	for(auto w = fozboz.begin(); w != fozboz.end(); ++w) {	
 		Target = *w;
@@ -287,7 +229,12 @@ int main(int argc, char **argv)
 		cout << "Nodelist size:" << nl.size() << std::endl;
 		
 	// -----------standard 4 index search-------------------------------
-	
+		// Open a file for results
+		// Filename: cxtocta_real_imag.dat
+		
+		std::string path = "./cxtocta_real_imag.dat";
+		std::ofstream outfile (path, ios::out|ios::binary);
+		
 		int count = 0;
 		bool fail_flag;
 		for(auto a = nl.begin(); a != nl.end(); ++a) {		
@@ -411,6 +358,12 @@ int main(int argc, char **argv)
 							cout << *z << "\t";
 						}
 						cout << std::endl << std::endl;
+						
+						// call write_cnode to write each row (*4)
+						write_cnode(a,outfile);
+						write_cnode(b,outfile);
+						write_cnode(c,outfile);
+						write_cnode(d,outfile);
 						
 					} // end d
 				} // end c			
