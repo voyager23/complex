@@ -153,7 +153,7 @@ int write_cnode(NodeList::iterator a, ofstream& fout) {
 int main(int argc, char **argv)
 {
 	// Data block of possible target values
-	std::vector<std::complex<double>> fozboz = { std::complex<double>(24,8) };
+	std::vector<std::complex<double>> fozboz = { std::complex<double>(25,11) };
 	
 	std::complex<double> Target;
 	NodeList nl;

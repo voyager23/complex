@@ -1,3 +1,9 @@
+[mike@fc22 sizes]$ ./a.out 
+Integer 4 bytes
+Double  8 bytes
+size_t  8 bytes
+
+
 				// print 4 vectors and blank line
 				for(auto z = (*a).begin(); z != (*a).end(); ++z) {
 					cout << *z;
