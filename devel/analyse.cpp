@@ -45,7 +45,7 @@ void prt_ctocta(cTocta,gPrime);
 size_t hash32(cTocta);
 bool gprime_lt(gPrime,gPrime);
 
-void testfunction(const std::vector<cTocta>, std::vector<NodeRing>);
+void testfunction(const std::vector<cTocta>& vct, std::vector<std::array<NodeRing,3>>& nr);
 
 //-----Definitions-----
 void prt_ctocta(cTocta ct, gPrime target) {
@@ -86,8 +86,65 @@ size_t hash64(cTocta ct) {
 	return hash;
 }
 
-void testfunction(const std::vector<cTocta> vct, std::vector<NodeRing> nr) {
-
+void testfunction(const std::vector<cTocta> &vct, std::vector<std::array<NodeRing,3>> &nr) {
+	// first index selects an array of NodeRings
+	// second index selects an array of gPrimes
+	// third index selects a gPrime
+	
+	bool a0_found, a2_found, b2_found;
+		
+	nr.clear();
+	for(auto a = vct.begin(); a != vct.end(); ++a) {
+		// setup 3 NodeRing for comparison
+		NodeRing a0 = { (*a)[0][0],(*a)[1][0],(*a)[2][0],(*a)[3][0], (*a)[0][0],(*a)[1][0],(*a)[2][0] };
+		NodeRing a2 = { (*a)[0][2],(*a)[2][2],(*a)[2][3],(*a)[0][3], (*a)[0][2],(*a)[2][2],(*a)[2][3] };
+		NodeRing b2 = { (*a)[1][2],(*a)[3][2],(*a)[3][3],(*a)[1][3], (*a)[1][2],(*a)[3][2],(*a)[3][3] };
+		for(auto b = nr.begin(); b != nr.end(); ++b) {
+			// scan for a0 ring
+			for(int q = 0; q < 4; ++q) {
+				a0_found = ( 
+					(*b)[0][0] == a0[q+0] &&
+					(*b)[0][1] == a0[q+1] &&
+					(*b)[0][2] == a0[q+2] &&
+					(*b)[0][3] == a0[q+3] 
+					);
+				if(a0_found)  { break; }
+			}
+			// a0_found breaks to here...
+			if(a0_found) { // scan for a2 ring
+				for(int q = 0; q < 4; ++q) {
+					a2_found = ( 
+						(*b)[1][0] == a2[q+0] &&
+						(*b)[1][1] == a2[q+1] &&
+						(*b)[1][2] == a2[q+2] &&
+						(*b)[1][3] == a2[q+3] 
+						);
+					if(a2_found) { break; }
+				}
+			}
+			// a2_found breaks to here...
+			if(a0_found && a2_found) { // scan for b2 ring
+				for(int q = 0; q < 4; ++q) {
+					b2_found = ( 
+						(*b)[2][0] == b2[q+0] &&
+						(*b)[2][1] == b2[q+1] &&
+						(*b)[2][2] == b2[q+2] &&
+						(*b)[2][3] == b2[q+3] 
+						);
+					if(b2_found) { break; }
+				}
+			}
+			// stop scanning if match found
+			if(a0_found && a2_found && b2_found) break; 
+		}
+		// test for update
+		if(a0_found && a2_found && b2_found) break;	// next cTocta 
+		// else update the node rings list with new config
+		cout << "adding new config\n";
+		nr.push_back(std::array<NodeRing,3> { a0, a2, b2 } );	
+	}				
+	cout << "nr has " << nr.size() << " entries." << std::endl;		
+	cout << "\ntestfunction complete\n";
 }
 
 //-----Main Code-----
@@ -151,14 +208,13 @@ int main(int argc, char **argv)
 		cout << "insert_count:" << insert_count << std::endl;
 		
 		std::vector<cTocta> vct;
+		std::vector<cTocta>& vct_ref = vct;
 		
-		std::vector<std::array<NodeRing,3>> noderings;
+		std::vector<std::array<NodeRing,3>> node_rings;
+		std::vector<std::array<NodeRing,3>>& nr_ref = node_rings;
 		
 		std::vector<NodeRing> a0_rings;
 		NodeRing a0_current;
-		bool found;
-		
-		testfunction(vct, a0_rings);
 		
 		// start by generating a vector of cToctas from a family
 		for(unsigned a = 0; a < umm_families.bucket_count(); ++a) {
@@ -168,28 +224,13 @@ int main(int argc, char **argv)
 					vct.push_back(b->second);
 				}
 				cout << std::endl << "cTocta count:" << vct.size() << std::endl;
-				// analyse each cTocta in terms of the a0_ring configuration
-				a0_rings.clear();
-				for(auto c = vct.begin(); c != vct.end(); ++c) {
-					a0_current = { (*c)[0][0],(*c)[1][0],(*c)[2][0],(*c)[3][0], (*c)[0][0],(*c)[1][0],(*c)[2][0] };
-					// search a0_rings
-					found = false;
-					for(auto p = a0_rings.begin(); p != a0_rings.end(); ++p) {
-						for(int q = 0; q < 4; ++q) {
-							found = ( 
-							(*p)[q+0] == a0_current[0] &&
-							(*p)[q+1] == a0_current[1] &&
-							(*p)[q+2] == a0_current[2] &&
-							(*p)[q+3] == a0_current[3] 
-							);
-							if(found) break;
-						}
-						if(found) break;
-					}
-					if(!(found)) a0_rings.push_back(a0_current);
-				}
-				// report size() of a0_rings
-				cout << "a0_rings - found: " << a0_rings.size() << std::endl;
+				
+				//------------------------------------------------------
+				
+				testfunction(vct_ref, nr_ref);
+				// cout << "Value in NodeRings:" << node_rings[0][0][0] << std::endl;
+				//------------------------------------------------------
+				
 				// print out the contents of a0_rings
 				for(auto p = a0_rings.begin(); p != a0_rings.end(); ++p) {
 					for(int q = 0; q < 4; ++q) cout << (*p)[q] << "\t";
