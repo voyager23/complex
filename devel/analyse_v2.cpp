@@ -177,7 +177,7 @@ int main(int argc, char **argv)
 	if((length % 256)!=0) {
 		cout << "Warning: Length mod 256 = " << (length%256) << std::endl;
 		exit(1);
-	} else {		
+	} else {	
 		char *isbuffer = new char [length];
 		cTocta ct;
 		cNode cn;
@@ -187,6 +187,7 @@ int main(int argc, char **argv)
 		int read_count = 0;
 		int insert_count = 0;
 		
+		// reassemble cToctas from 16 std::complex<double>
 		while(1) {
 			is.read(isbuffer, sizeof(double) * 32);
 			if(is.eof()) break;
@@ -204,18 +205,11 @@ int main(int argc, char **argv)
 				ct.push_back(cn);
 			}
 			size_t signature = hash64(ct,0);
-			
-#if(0)		
-			// determine family from fasthash32
-			if( signature == 11653120196325356709U) {
-				prt_ctocta(ct,target);
-				cout << signature << std::endl;
-			}
-#endif
 	
 			// construct key - value pair  insert into unordered_multimap
 			umm_families.insert(std::pair<size_t, cTocta> { signature,ct } );	++insert_count;
 		} // while ...
+		
 		int ndatablocks = length / 256;
 		int nfamilies = ndatablocks / 48;
 		cout << "File length consistent.\t";
