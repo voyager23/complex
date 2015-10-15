@@ -45,9 +45,10 @@ void prt_ctocta(cTocta,gPrime);
 size_t hash32(cTocta, int);
 bool gprime_lt(gPrime,gPrime);
 
-struct cToctaInfo {
-	cTocta ctoc;
-	int family;
+struct cToctaInfo {	
+	std::complex<double> group;
+	int species;
+	cTocta ctocta;
 };
 
 void testfunction(const std::vector<cTocta>& vct, std::vector<std::array<NodeRing,3>>& nr);
@@ -101,72 +102,13 @@ size_t hash64(cTocta ct,int mode) {
 	return hash;
 }
 
-void testfunction(const std::vector<cTocta> &vct, std::vector<std::array<NodeRing,3>> &nr) {
-	// first index selects an array of NodeRings
-	// second index selects an array of gPrimes
-	// third index selects a gPrime
-	
-	bool a0_found, a2_found, b2_found;
-		
-	nr.clear();
-	for(auto a = vct.begin(); a != vct.end(); ++a) {
-		// setup 3 NodeRing for comparison
-		NodeRing a0 = { (*a)[0][0],(*a)[1][0],(*a)[2][0],(*a)[3][0], (*a)[0][0],(*a)[1][0],(*a)[2][0] };
-		NodeRing a2 = { (*a)[0][2],(*a)[2][2],(*a)[2][3],(*a)[0][3], (*a)[0][2],(*a)[2][2],(*a)[2][3] };
-		NodeRing b2 = { (*a)[1][2],(*a)[3][2],(*a)[3][3],(*a)[1][3], (*a)[1][2],(*a)[3][2],(*a)[3][3] };
-		for(auto b = nr.begin(); b != nr.end(); ++b) {
-			// scan for a0 ring
-			for(int q = 0; q < 4; ++q) {
-				a0_found = ( 
-					(*b)[0][0] == a0[q+0] &&
-					(*b)[0][1] == a0[q+1] &&
-					(*b)[0][2] == a0[q+2] &&
-					(*b)[0][3] == a0[q+3] 
-					);
-				if(a0_found)  { break; }
-			}
-			// a0_found breaks to here...
-			if(a0_found) { // scan for a2 ring
-				for(int q = 0; q < 4; ++q) {
-					a2_found = ( 
-						(*b)[1][0] == a2[q+0] &&
-						(*b)[1][1] == a2[q+1] &&
-						(*b)[1][2] == a2[q+2] &&
-						(*b)[1][3] == a2[q+3] 
-						);
-					if(a2_found) { break; }
-				}
-			}
-			// a2_found breaks to here...
-			if(a0_found && a2_found) { // scan for b2 ring
-				for(int q = 0; q < 4; ++q) {
-					b2_found = ( 
-						(*b)[2][0] == b2[q+0] &&
-						(*b)[2][1] == b2[q+1] &&
-						(*b)[2][2] == b2[q+2] &&
-						(*b)[2][3] == b2[q+3] 
-						);
-					if(b2_found) { break; }
-				}
-			}
-			// stop scanning if match found
-			if(a0_found && a2_found && b2_found) break; 
-		}
-		// test for update
-		if(a0_found && a2_found && b2_found) break;	// next cTocta 
-		// else update the node rings list with new config
-		// cout << "adding new config\n";
-		nr.push_back(std::array<NodeRing,3> { a0, a2, b2 } );	
-	}				
-	cout << "nr has " << nr.size() << " entries." << std::endl;		
-	cout << "\ntestfunction complete\n";
-}
-
 //-----Main Code-----
 int main(int argc, char **argv)
 {
 	std::string path = "./cxtocta_real_imag.dat";
 	std::ifstream is (path, std::ifstream::binary);
+
+	std::vector<cToctaInfo> vcti;
 	
 	// get length of file
 	is.seekg(0,is.end);
@@ -182,12 +124,13 @@ int main(int argc, char **argv)
 		cTocta ct;
 		cNode cn;
 		gPrime gp,target;
-		std::unordered_multimap<size_t, cTocta> umm_families;
+		cToctaInfo cti;
 		
 		int read_count = 0;
 		int insert_count = 0;
 		
 		// reassemble cToctas from 16 std::complex<double>
+		vcti.clear();
 		while(1) {
 			is.read(isbuffer, sizeof(double) * 32);
 			if(is.eof()) break;
@@ -204,56 +147,25 @@ int main(int argc, char **argv)
 				}
 				ct.push_back(cn);
 			}
-			size_t signature = hash64(ct,0);
-	
-			// construct key - value pair  insert into unordered_multimap
-			umm_families.insert(std::pair<size_t, cTocta> { signature,ct } );	++insert_count;
+			// place all cToctas into a single vector
+			cti.ctocta = ct;
+			cti.species = -1;
+			vcti.push_back(cti);	++insert_count;
 		} // while ...
 		
 		int ndatablocks = length / 256;
 		int nfamilies = ndatablocks / 48;
 		cout << "File length consistent.\t";
 		cout << "DataBlocks=" << ndatablocks << "\tFamilies=" << nfamilies;
-		cout << std::endl;
-		
+		cout << std::endl;		
 		cout << "read_count:" << read_count << std::endl;
 		cout << "insert_count:" << insert_count << std::endl;
 		
-		std::vector<cTocta> vct;
-		std::vector<cTocta>& vct_ref = vct;
-		
-		std::vector<std::array<NodeRing,3>> node_rings;
-		std::vector<std::array<NodeRing,3>>& nr_ref = node_rings;
-		
-		std::vector<NodeRing> a0_rings;
-		NodeRing a0_current;
-		
-		// start by generating a vector of cToctas from a family
-		for(unsigned a = 0; a < umm_families.bucket_count(); ++a) {
-			if(umm_families.bucket_size(a) > 48) {
-				vct.clear();
-				for(auto b = umm_families.cbegin(a); b != umm_families.cend(a); ++b) {
-					vct.push_back(b->second);
-				}
-				cout << std::endl << "cTocta count:" << vct.size() << std::endl;
+		int species_id = 0;
+		for(auto a = vcti.begin(); a != vcti.end(); ++a) {
+			if(a->species == -1) continue;
+		}
 				
-				//------------------------------------------------------
-				
-				testfunction(vct_ref, nr_ref);
-				// print the contents of node rings
-#if(0)				
-				for(auto a = node_rings.begin(); a != node_rings.end(); ++a) {
-					for(int p = 0; p < 3; ++p) {
-						for(int q = 0; q < 4; ++q) cout << (*a)[p][q] << "\t";
-						cout << std::endl;
-					}
-					cout << std::endl;
-				}
-#endif		
-				//------------------------------------------------------
-				
-			} // if size > 0...
-		} // for a...
 	} // else ...
 	is.close();
 	return 0;

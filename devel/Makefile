@@ -1,6 +1,6 @@
 # Makefile for complex/devel
 
-TARGET = analyse
+TARGET = analyse_v2
 
 $(TARGET):	$(TARGET).cpp fasthash.o
 	g++ -std=gnu++11 -g -Wall  $(TARGET).cpp fasthash.o -o $(TARGET)
