@@ -21,48 +21,10 @@
  * 
  */
 
-
-#include <cstdlib>
-#include <iostream>
-#include <fstream>
-#include <complex>
-#include <vector>
-#include <unordered_map>
-#include <algorithm>
-#include <typeinfo>
-
-#include "./fasthash.h"
-
-//-----Declarations-----
-using namespace std;
-using gPrime = std::complex<double>;
-using cNode = std::vector<gPrime>;		// normally 4 complex<double>
-using cTocta = std::vector<cNode>;	// normally 4 cNodes
-
-using NodeRing = std::array<gPrime,7>;	// a,b,c,d,a,b,c
-
-void prt_ctocta(cTocta,gPrime);
-size_t hash32(cTocta, int);
-bool gprime_lt(gPrime,gPrime);
-
-struct cToctaInfo {	
-	std::complex<double> group;
-	int species;
-	cTocta ctocta;
-};
-
-void testfunction(const std::vector<cTocta>& vct, std::vector<std::array<NodeRing,3>>& nr);
+#include "analyse.hpp"
 
 //-----Definitions-----
-void prt_ctocta(cTocta ct, gPrime target) {
-	// print 4 rows of 4 complex primes and 1 blank line
-	cout << "Target:" << target << std::endl;
-	for(auto z = ct.begin(); z != ct.end(); ++z) {
-		for(auto y = (*z).begin(); y != (*z).end(); ++y) cout << *y << "\t";
-		cout << std::endl;
-	}
-	cout << std::endl;
-}
+
 
 bool gprime_lt(gPrime i, gPrime j) {
 	// return true if i < j
@@ -125,12 +87,14 @@ int main(int argc, char **argv)
 		cNode cn;
 		gPrime gp,target;
 		cToctaInfo cti;
+		std::unordered_multimap<size_t, cToctaInfo> umm_input;
+		std::unordered_multimap<size_t, cToctaInfo> umm_groups;
 		
 		int read_count = 0;
 		int insert_count = 0;
+		int group_count = 1;
 		
 		// reassemble cToctas from 16 std::complex<double>
-		vcti.clear();
 		while(1) {
 			is.read(isbuffer, sizeof(double) * 32);
 			if(is.eof()) break;
@@ -149,23 +113,133 @@ int main(int argc, char **argv)
 			}
 			// place all cToctas into a single vector
 			cti.ctocta = ct;
-			cti.species = -1;
-			vcti.push_back(cti);	++insert_count;
+			cti.group = group_count++;
+			cti.sub_group = 0;
+			cti.signature = hash64(ct,0);
+			// form a key:value pair and insert
+			umm_input.insert(std::make_pair(cti.signature,cti));
+			++insert_count;
 		} // while ...
 		
 		int ndatablocks = length / 256;
 		int nfamilies = ndatablocks / 48;
-		cout << "File length consistent.\t";
-		cout << "DataBlocks=" << ndatablocks << "\tFamilies=" << nfamilies;
-		cout << std::endl;		
-		cout << "read_count:" << read_count << std::endl;
-		cout << "insert_count:" << insert_count << std::endl;
+		cout << "File length consistent.\n";
+		cout << "DataBlocks=" << ndatablocks << "\tFamilies?=" << nfamilies << std::endl;		
+		cout << "read_count:" << read_count << "\tinsert_count:" << insert_count << std::endl;
 		
-		int species_id = 0;
-		for(auto a = vcti.begin(); a != vcti.end(); ++a) {
-			if(a->species == -1) continue;
-		}
+		// scan the vector og cToctaInfo and assign to sub_groups
+		for(unsigned a = 0; a != umm_input.bucket_count(); ++a) 
+			if(umm_input.bucket_size(a) > 48) {
+				cout << umm_input.bucket_size(a) << std::endl;
+				cToctaInfo workspace;
+				int sub_group_idx = 0;
+				for(auto it = umm_input.cbegin(a); it != umm_input.cend(a); ++it) {
+					workspace = it->second;
+					if(workspace.sub_group != 0) continue;	// already processed
+					
+					// This cTocta is not assigned to a sub_group						
+					sub_group_idx += 1;			// new sub_group index
+					cTocta working = workspace.ctocta;
+					
+					prt_ctocta(working);	// debug output
+					
+					// calc and process the first 16 rotations
+					for(int bd=0; bd<4; bd++) {
+						for(int ef=0; ef<4; ef++) {
+							// find this cTocta in container
+							bool flag;
+							for(auto p = umm_input.cbegin(a); p != umm_input.cend(a); ++p) {
+								cToctaInfo local = p->second;
+								flag = false;
+								if(compare_cTocta(working, local.ctocta)) {
+									cout << "Found\n";
+									flag = true;
+									if(local.sub_group != 0) {
+										cout << "Warning: none-zero sub_group value " << local.sub_group << std::endl;
+									} else {
+										local.sub_group = sub_group_idx;
+									}
+									break;
+								}
+							}
+							// 		error if not found
+							if(!flag)  cout << "Warning: Working cTocta not found in container." << std::endl;
+							// update the sub_group to sub_group_idx
+							// rotate to next config
+							complex_apply_ef(working);
+						} // for ef...
+						complex_apply_bd(working);
+					} // for bd...
+									
+					// get next 4 configurations
+					complex_apply_ac(working);
+					
+					for(int ef=0; ef<4; ef++) {
+						// find this cTocta in container
+						bool flag;
+						for(auto p = umm_input.cbegin(a); p != umm_input.cend(a); ++p) {
+							cToctaInfo local = p->second;
+							flag = false;
+							if(compare_cTocta(working, local.ctocta)) {
+								cout << "Found\n";
+								flag = true;
+								if(local.sub_group != 0) {
+									cout << "Warning: none-zero sub_group value " << local.sub_group << std::endl;
+								} else {
+									local.sub_group = sub_group_idx;
+								}
+								break;
+							}
+						}
+						// 		error if not found
+						if(!flag)  cout << "Warning: Working cTocta not found in container." << std::endl;
+						// update the sub_group to sub_group_idx
+						// rotate to next config
+						complex_apply_ef(working);
+					} // for ef...
+					
+					// get last 4 configurations
+					complex_apply_ac(working);
+					complex_apply_ac(working);
 				
+					for(int ef=0; ef<4; ef++) {
+						// find this cTocta in container
+						bool flag;
+						for(auto p = umm_input.cbegin(a); p != umm_input.cend(a); ++p) {
+							cToctaInfo local = p->second;
+							flag = false;
+							if(compare_cTocta(working, local.ctocta)) {
+								cout << "Found\n";
+								flag = true;
+								if(local.sub_group != 0) {
+									cout << "Warning: none-zero sub_group value " << local.sub_group << std::endl;
+								} else {
+									local.sub_group = sub_group_idx;
+								}
+								break;
+							}
+						}
+						// 		error if not found
+						if(!flag)  cout << "Warning: Working cTocta not found in container." << std::endl;
+						// update the sub_group to sub_group_idx
+						// rotate to next config
+						complex_apply_ef(working);
+					} // for ef...
+					
+					// rotate to initial config
+					complex_apply_ac(working);
+					
+					// debug output
+					prt_ctoctainfo(workspace);	
+					exit(0);
+					// debug stop
+					
+					// Reflect about horizontal plane abcd for next 24 configurations
+					complex_apply_abcd(working);
+					
+					
+			} // for iterator...
+		}				
 	} // else ...
 	is.close();
 	return 0;
