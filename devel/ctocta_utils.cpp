@@ -48,7 +48,7 @@ void prt_ctocta(cTocta ct) {
 		for(auto y = (*z).begin(); y != (*z).end(); ++y) cout << *y << "\t";
 		cout << std::endl;
 	}
-	cout << std::endl;
+	//cout << std::endl;
 }
 
 void prt_ctoctainfo(cToctaInfo cti) {
