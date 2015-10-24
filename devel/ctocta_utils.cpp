@@ -25,6 +25,46 @@
 
 #include "analyse.hpp"
 
+//--------------------------Definitions---------------------------------
+
+bool gprime_lt(gPrime i, gPrime j) {
+	// return true if i < j
+	return ((i.real()<j.real())||((i.real()==j.real())&&(i.imag()<j.imag())));
+}
+
+size_t hash64(cTocta ct,int mode) {
+	// mode 0 - calc hash for 12 sorted unique gPrimes.
+	// mode 1 - calc hash for 16 unsorted unique gPrimes.
+	
+	std::vector<gPrime> sig_vector;
+	
+	if(mode==0) {
+	// form sig_vector - a vector of gPrimes from the complex tocta
+	sig_vector = {
+	ct[0][0],ct[0][1],ct[0][2],ct[0][3],\
+	ct[1][1],ct[1][2],ct[1][3],\
+	ct[2][1],ct[2][2],ct[2][3],\
+	ct[3][2],ct[3][3]
+	};
+	
+	// sort the sig_vector				
+	std::sort(sig_vector.begin(), sig_vector.end(), gprime_lt);
+	} else {
+		cout << "hash64 error - mode " << mode << " not implemented." << std::endl;
+		exit(1);
+	}
+	
+	// calculate the hash value as size_t								
+	size_t hash = 0x12345678;
+	for(auto x=sig_vector.begin(); x!=sig_vector.end(); ++x) {
+		std::array<double,2> values = { (*x).real(), (*x).imag() };
+		hash = fasthash64((const void*)&values, sizeof(double)*2, hash);
+	}
+	
+	// return hash value
+	return hash;
+}
+
 //----------------------------------------------------------------------
 bool compare_cTocta(cTocta &l, cTocta &r) {
 	// return false if cToctas are not equal

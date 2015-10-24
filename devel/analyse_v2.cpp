@@ -23,46 +23,6 @@
 
 #include "analyse.hpp"
 
-//-----Definitions-----
-
-
-bool gprime_lt(gPrime i, gPrime j) {
-	// return true if i < j
-	return ((i.real()<j.real())||((i.real()==j.real())&&(i.imag()<j.imag())));
-}
-
-size_t hash64(cTocta ct,int mode) {
-	// mode 0 - calc hash for 12 sorted unique gPrimes.
-	// mode 1 - calc hash for 16 unsorted unique gPrimes.
-	
-	std::vector<gPrime> sig_vector;
-	
-	if(mode==0) {
-	// form sig_vector - a vector of gPrimes from the complex tocta
-	sig_vector = {
-	ct[0][0],ct[0][1],ct[0][2],ct[0][3],\
-	ct[1][1],ct[1][2],ct[1][3],\
-	ct[2][1],ct[2][2],ct[2][3],\
-	ct[3][2],ct[3][3]
-	};
-	
-	// sort the sig_vector				
-	std::sort(sig_vector.begin(), sig_vector.end(), gprime_lt);
-	} else {
-		cout << "hash64 error - mode " << mode << " not implemented." << std::endl;
-		exit(1);
-	}
-	
-	// calculate the hash value as size_t								
-	size_t hash = 0x12345678;
-	for(auto x=sig_vector.begin(); x!=sig_vector.end(); ++x) {
-		std::array<double,2> values = { (*x).real(), (*x).imag() };
-		hash = fasthash64((const void*)&values, sizeof(double)*2, hash);
-	}
-	
-	// return hash value
-	return hash;
-}
 
 //-----Main Code-----
 int main(int argc, char **argv)
@@ -130,20 +90,19 @@ int main(int argc, char **argv)
 		// scan the vector of cToctaInfo and assign to sub_groups
 		for(unsigned a = 0; a != umm_input.bucket_count(); ++a) {
 		
-			if(umm_input.bucket_size(a) > 48) {
-				cout << "Bucket size:" << umm_input.bucket_size(a) << std::endl;
+			if(umm_input.bucket_size(a) >= 48) {
+				cout << "\nBucket size:" << umm_input.bucket_size(a) << std::endl;
 				cToctaInfo workspace;
 				int sub_group_idx = 0;
 				
 				for(auto it = umm_input.begin(a); it != umm_input.end(a); ++it) {
 					workspace = it->second;
 					if(workspace.sub_group != 0) continue;	// already processed
-					
+					//prt_ctoctainfo(workspace);
 					// This cTocta is not assigned to a sub_group						
 					sub_group_idx += 1;			// new sub_group index
-					cTocta working = workspace.ctocta;
-									
-//...................First Section......................................
+					cTocta working = workspace.ctocta;									
+//...................First Search Section......................................
 					// calc and process the first 16 rotations
 					for(int bd=0; bd<4; bd++) {
 						for(int ef=0; ef<4; ef++) {
@@ -152,7 +111,7 @@ int main(int argc, char **argv)
 							for(auto p = umm_input.begin(a); p != umm_input.end(a); ++p) {
 								flag = false;
 								if(compare_cTocta(working, p->second.ctocta)) {
-									cout << "Found\n";
+									//cout << "Found\n";
 									flag = true;
 									if(p->second.sub_group != 0) {
 										cout << "Warning: none-zero sub_group value " << p->second.sub_group << std::endl;
@@ -160,13 +119,12 @@ int main(int argc, char **argv)
 										p->second.sub_group = sub_group_idx;
 										p->second.group = a;
 									}
-									prt_ctoctainfo(p->second); cout << std::endl;
+									// prt_ctoctainfo(p->second); cout << std::endl;
 									break;
 								}
 							}
 							// 		error if not found
 							if(!flag)  cout << "Warning: Working cTocta not found in container." << std::endl;
-							// update the sub_group to sub_group_idx
 							// rotate to next config
 							complex_apply_ef(working);
 						} // for ef...
@@ -183,7 +141,7 @@ int main(int argc, char **argv)
 							cToctaInfo local = p->second;
 							flag = false;
 							if(compare_cTocta(working, p->second.ctocta)) {
-								cout << "Found\n";
+								//cout << "Found\n";
 								flag = true;
 								if(p->second.sub_group != 0) {
 									cout << "Warning: none-zero sub_group value " << p->second.sub_group << std::endl;
@@ -191,13 +149,12 @@ int main(int argc, char **argv)
 									p->second.sub_group = sub_group_idx;
 									p->second.group = a;
 								}
-								prt_ctoctainfo(p->second); cout << std::endl;
+								// prt_ctoctainfo(p->second); cout << std::endl;
 								break;
 							}
 						}
 						// 		error if not found
 						if(!flag)  cout << "Warning: Working cTocta not found in container." << std::endl;
-						// update the sub_group to sub_group_idx
 						// rotate to next config
 						complex_apply_ef(working);
 					} // for ef...
@@ -213,7 +170,7 @@ int main(int argc, char **argv)
 							cToctaInfo local = p->second;
 							flag = false;
 							if(compare_cTocta(working, p->second.ctocta)) {
-								cout << "Found\n";
+								//cout << "Found\n";
 								flag = true;
 								if(p->second.sub_group != 0) {
 									cout << "Warning: none-zero sub_group value " << p->second.sub_group << std::endl;
@@ -221,13 +178,12 @@ int main(int argc, char **argv)
 									p->second.sub_group = sub_group_idx;
 									p->second.group = a;
 								}
-								prt_ctoctainfo(p->second); cout << std::endl;
+								// prt_ctoctainfo(p->second); cout << std::endl;
 								break;
 							}
 						}
 						// error if not found
 						if(!flag)  cout << "Warning: Working cTocta not found in container." << std::endl;
-						// update the sub_group to sub_group_idx
 						// rotate to next config
 						complex_apply_ef(working);
 					} // for ef...
@@ -238,7 +194,7 @@ int main(int argc, char **argv)
 					// Reflect about horizontal plane abcd for next 24 configurations
 					complex_apply_abcd(working);
 					
-// ..................Repeat first section...............................
+// ..................Search reflections...............................
 					// calc and process the first 16 rotations
 					for(int bd=0; bd<4; bd++) {
 						for(int ef=0; ef<4; ef++) {
@@ -247,7 +203,7 @@ int main(int argc, char **argv)
 							for(auto p = umm_input.begin(a); p != umm_input.end(a); ++p) {
 								flag = false;
 								if(compare_cTocta(working, p->second.ctocta)) {
-									cout << "Found\n";
+									//cout << "Found\n";
 									flag = true;
 									if(p->second.sub_group != 0) {
 										cout << "Warning: none-zero sub_group value " << p->second.sub_group << std::endl;
@@ -255,13 +211,12 @@ int main(int argc, char **argv)
 										p->second.sub_group = sub_group_idx;
 										p->second.group = a;
 									}
-									prt_ctoctainfo(p->second); cout << std::endl;
+									//prt_ctoctainfo(p->second); cout << std::endl;
 									break;
 								}
 							}
 							// 		error if not found
 							if(!flag)  cout << "Warning: Working cTocta not found in container." << std::endl;
-							// update the sub_group to sub_group_idx
 							// rotate to next config
 							complex_apply_ef(working);
 						} // for ef...
@@ -278,7 +233,7 @@ int main(int argc, char **argv)
 							cToctaInfo local = p->second;
 							flag = false;
 							if(compare_cTocta(working, p->second.ctocta)) {
-								cout << "Found\n";
+								//cout << "Found\n";
 								flag = true;
 								if(p->second.sub_group != 0) {
 									cout << "Warning: none-zero sub_group value " << p->second.sub_group << std::endl;
@@ -286,13 +241,12 @@ int main(int argc, char **argv)
 									p->second.sub_group = sub_group_idx;
 									p->second.group = a;
 								}
-								prt_ctoctainfo(p->second); cout << std::endl;
+								//prt_ctoctainfo(p->second); cout << std::endl;
 								break;
 							}
 						}
 						// 		error if not found
 						if(!flag)  cout << "Warning: Working cTocta not found in container." << std::endl;
-						// update the sub_group to sub_group_idx
 						// rotate to next config
 						complex_apply_ef(working);
 					} // for ef...
@@ -308,33 +262,37 @@ int main(int argc, char **argv)
 							cToctaInfo local = p->second;
 							flag = false;
 							if(compare_cTocta(working, p->second.ctocta)) {
-								cout << "Found\n";
+								//cout << "Found\n";
 								flag = true;
 								if(p->second.sub_group != 0) {
 									cout << "Warning: none-zero sub_group value " << p->second.sub_group << std::endl;
 								} else {
 									p->second.sub_group = sub_group_idx;
-									p->second.group = a;
+									p->second.group = a;                                
+									// TODO: MODIFY SIGNATURE - 6 PLACES- SEE NOTES
 								}
-								prt_ctoctainfo(p->second); cout << std::endl;
+								//prt_ctoctainfo(p->second); cout << std::endl;
 								break;
 							}
 						}
 						// error if not found
 						if(!flag)  cout << "Warning: Working cTocta not found in container." << std::endl;
-						// update the sub_group to sub_group_idx
 						// rotate to next config
 						complex_apply_ef(working);
 					} // for ef...
 					
 					// rotate to initial config
 					complex_apply_ac(working);
-//......................................................................
-					
+
 				}// for bucket iterator
+				
+				// print the unsorted bucket contents
+				cout << "======================================\n";
+				for(auto p = umm_input.begin(a); p != umm_input.end(a); ++p) prt_ctoctainfo(p->second);
+				
 			} // if bucket size ...
-		}// for unsigned a				
-	} // else sanity check ok
+		}// get next bucket			
+	} // sanity check ok
 	is.close();
 	return 0;
 }

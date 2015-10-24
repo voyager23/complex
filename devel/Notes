@@ -1,3 +1,11 @@
+
+
+24/10/15
+// make a new signature - hash sub_group and signature
+double xyz = p->second.sub_group;
+p->second.signature = fasthash64((const void*)&xyz, 1 , p->second.signature);
+//===========================================================================
+
 12/10/15 from analyse.cpp
 //------------------------------------------------------
 // analyse each cTocta in terms of the a0_ring configuration
