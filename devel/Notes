@@ -1,10 +1,30 @@
+25Oct2015
+
+				//Constructing the umm_groups from umm_input
+				
+				for(unsigned a = 0; a != umm_input.bucket_count(); ++a) {
+					if(umm_input.bucket_size(a) < 48) continue;
+					group_count += 1;
+					for(auto b = umm_input.begin(a); b != umm_input.end(a); ++b) {
+						size_t new_sig = b->first;
+						cToctaInfo info = b->second;
+						info.group = group_count;
+						double xyz[2] = {(double)info.sub_group, (double)info.group};
+						new_sig = fasthash64((const void*)&xyz, 1, info.signature);
+						umm_groups.insert(std::make_pair(new_sig,info));
+					}
+				}
 
 
+//======================================================================
 24/10/15
 // make a new signature - hash sub_group and signature
 double xyz = p->second.sub_group;
 p->second.signature = fasthash64((const void*)&xyz, 1 , p->second.signature);
 //===========================================================================
+
+
+
 
 12/10/15 from analyse.cpp
 //------------------------------------------------------

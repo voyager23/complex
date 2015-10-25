@@ -47,8 +47,8 @@ int main(int argc, char **argv)
 		cNode cn;
 		gPrime gp,target;
 		cToctaInfo cti;
-		std::unordered_multimap<size_t, cToctaInfo> umm_input;
-		std::unordered_multimap<size_t, cToctaInfo> umm_groups;
+		std::unordered_multimap<uint64_t, cToctaInfo> umm_input;
+		std::unordered_multimap<uint64_t, cToctaInfo> umm_groups;
 		
 		int read_count = 0;
 		int insert_count = 0;
@@ -88,6 +88,8 @@ int main(int argc, char **argv)
 		cout << "read_count:" << read_count << "\tinsert_count:" << insert_count << std::endl;
 		
 		// scan the vector of cToctaInfo and assign to sub_groups
+		umm_groups.clear();
+		group_count = 0;
 		for(unsigned a = 0; a != umm_input.bucket_count(); ++a) {
 		
 			if(umm_input.bucket_size(a) >= 48) {
@@ -287,11 +289,41 @@ int main(int argc, char **argv)
 				}// for bucket iterator
 				
 				// print the unsorted bucket contents
-				cout << "======================================\n";
-				for(auto p = umm_input.begin(a); p != umm_input.end(a); ++p) prt_ctoctainfo(p->second);
 				
+				//for(auto p = umm_input.begin(a); p != umm_input.end(a); ++p) prt_ctoctainfo(p->second);
 			} // if bucket size ...
-		}// get next bucket			
+		} // get next bucket
+		
+		// All buckets processed
+		cout << "======================================\n";
+		umm_groups.clear();
+		std::pair<uint64_t,cToctaInfo> foo;
+		for(unsigned a = 0; a != umm_input.bucket_count(); ++a) {
+			if(umm_input.bucket_size(a) >= 48) {
+				for(auto p = umm_input.begin(a); p != umm_input.end(a); ++p) {
+					// prt_ctoctainfo(p->second);
+					// calc and display a new signature
+					std::array<int,2> values = {p->second.group, p->second.sub_group};
+					uint64_t hash = fasthash64((const void*)&values, sizeof(double)*2, p->second.signature);
+					// cout << "  New Sig:" << hash << std::endl;
+					// update the signature value in cToctaInfo
+					p->second.signature = hash;
+					foo = std::make_pair(hash, p->second);
+					umm_groups.insert(foo);
+				}
+			}
+		}
+		// output buckets in umm_groups
+		for(unsigned a = 0; a != umm_groups.bucket_count(); ++a) {
+			if(umm_groups.bucket_size(a) > 0) {
+				cout << "Found bucket: " << umm_groups.bucket_size(a) << std::endl;
+				for(auto p = umm_groups.begin(a); p != umm_groups.end(a); ++p) {
+					prt_ctoctainfo(p->second);
+					break;
+				}
+			}
+		}
+		
 	} // sanity check ok
 	is.close();
 	return 0;

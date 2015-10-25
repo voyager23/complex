@@ -32,7 +32,7 @@ bool gprime_lt(gPrime i, gPrime j) {
 	return ((i.real()<j.real())||((i.real()==j.real())&&(i.imag()<j.imag())));
 }
 
-size_t hash64(cTocta ct,int mode) {
+uint64_t hash64(cTocta ct,int mode) {
 	// mode 0 - calc hash for 12 sorted unique gPrimes.
 	// mode 1 - calc hash for 16 unsorted unique gPrimes.
 	
@@ -55,7 +55,7 @@ size_t hash64(cTocta ct,int mode) {
 	}
 	
 	// calculate the hash value as size_t								
-	size_t hash = 0x12345678;
+	uint64_t hash = 0x12345678;
 	for(auto x=sig_vector.begin(); x!=sig_vector.end(); ++x) {
 		std::array<double,2> values = { (*x).real(), (*x).imag() };
 		hash = fasthash64((const void*)&values, sizeof(double)*2, hash);

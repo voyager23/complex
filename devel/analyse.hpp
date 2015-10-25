@@ -31,7 +31,6 @@
 	#include <vector>
 	#include <unordered_map>
 	#include <algorithm>
-	#include <typeinfo>
 
 	#include "./fasthash.h"
 
@@ -45,12 +44,12 @@
 	struct cToctaInfo {	
 		cTocta ctocta;
 		int group, sub_group;
-		size_t signature;
+		uint64_t signature;
 	};
 
 	void prt_ctocta(cTocta);
 	void prt_ctoctainfo(cToctaInfo);
-	size_t hash64(cTocta, int);
+	uint64_t hash64(cTocta, int);
 	bool gprime_lt(gPrime,gPrime);
 	void testfunction(const std::vector<cTocta>& vct, std::vector<std::array<NodeRing,3>>& nr);
 	bool compare_cTocta(cTocta &l, cTocta &r);
